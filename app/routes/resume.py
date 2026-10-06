@@ -8,11 +8,14 @@ from app.services.pdf_service import (
     extract_text_from_pdf,
     validate_pdf_signature
 )
+from app.services.ai_service import analyze_resume
+from app.schemas.resume import ResumeAnalysis, ResumeUploadResponse
 
 router = APIRouter(prefix="/api/v1")
 
 
-@router.post("/resumes/upload")
+@router.post("/resumes/upload",
+    response_model=ResumeUploadResponse)
 def upload_resume(file: UploadFile = File(...)):
 
     if file.content_type != "application/pdf":
@@ -36,9 +39,11 @@ def upload_resume(file: UploadFile = File(...)):
 
         text = extract_text_from_pdf(temp_path)
 
+        analysis = analyze_resume(text)
+
         return {
             "filename": file.filename,
-            "text": text
+            "analysis": analysis
         }
 
     except ValueError as e:

@@ -7,3 +7,7 @@ class ResumeAnalysis(BaseModel):
     strengths: list[str]
     weaknesses: list[str]
     suggestions: list[str]
+
+class ResumeUploadResponse(BaseModel):
+    filename: str
+    analysis: ResumeAnalysis
