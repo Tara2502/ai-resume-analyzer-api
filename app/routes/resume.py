@@ -3,6 +3,11 @@ import tempfile
 import shutil
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
+from app.services.ai_exceptions import (
+    AIRateLimitError,
+    AIUnavailableError,
+    AIResponseError,
+)
 
 from app.services.pdf_service import (
     extract_text_from_pdf,
@@ -39,7 +44,26 @@ def upload_resume(file: UploadFile = File(...)):
 
         text = extract_text_from_pdf(temp_path)
 
-        analysis = analyze_resume(text)
+        try:
+            analysis = analyze_resume(text)
+
+        except AIRateLimitError:
+            raise HTTPException(
+        status_code=429,
+        detail="AI service rate limit or quota exceeded. Please try again later.",
+    )
+
+        except AIUnavailableError:
+            raise HTTPException(
+        status_code=503,
+        detail="AI service is temporarily unavailable. Please try again later.",
+    )
+
+        except AIResponseError:
+            raise HTTPException(
+        status_code=502,
+        detail="Unable to generate resume analysis.",
+    )
 
         return {
             "filename": file.filename,
